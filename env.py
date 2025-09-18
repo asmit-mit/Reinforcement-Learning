@@ -9,7 +9,7 @@ class Environment:
         self.screen_width, self.screen_height = 1240, 800
         self.border_width = 10
         self.score = 0
-        self.friction = 0.9
+        self.friction = 0.1
 
         self.screen = None
         self.font = None
@@ -125,9 +125,9 @@ class Environment:
         self.chaser_vel[1] += ay
 
         if ax == 0:
-            self.chaser_vel[0] *= self.friction
+            self.chaser_vel[0] *= (1 - self.friction)
         if ay == 0:
-            self.chaser_vel[1] *= self.friction
+            self.chaser_vel[1] *= (1 - self.friction)
 
         speed = (self.chaser_vel[0]**2 + self.chaser_vel[1]**2)**0.5
         if speed > self.max_chaser_speed:
@@ -157,7 +157,7 @@ class Environment:
             self.chaser_pos = [self.screen_width / 2, self.screen_height / 2]
             self.chaser_vel = [0.0, 0.0]
             self.score -= 1
-            reward = -100
+            reward = -2
             wall_hit = True
 
         self.runner_step_counter += 1
@@ -173,10 +173,10 @@ class Environment:
 
         if not wall_hit:
             if distance < self.prev_distance:
-                reward += 1
+                reward += 0.05
 
         if distance <= self.chaser_size + self.runner_size:
-            reward = 100
+            reward = 1
             self.score += 1
 
             self.runner_pos = [

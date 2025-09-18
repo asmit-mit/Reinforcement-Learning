@@ -6,20 +6,24 @@ from dqn import Agent
 
 pygame.init()
 env = Environment()
+
+env.screen = pygame.display.set_mode((env.screen_width, env.screen_height))
+env.font = pygame.font.SysFont("Arial", 18)
+env.max_runner_speed = 5
+env.max_chaser_speed = 10
+env.friction = 1
+
 clock = pygame.time.Clock()
 
 agent = Agent(
-    input_dim=8,
+    input_dim=12,
     output_dim=4,
-    hidden_dim=64,
-    buffer_size=10000,
-    batch_size=32,
-    gamma=0.99,
-    lr=1e-3,
+    hidden_dim=128,
 )
 
-agent.q_net.load_state_dict(torch.load("weights/demo.pth", map_location=agent.device))
+agent.q_net.load_state_dict(torch.load("weights/best_q_network.pth", map_location=agent.device))
 agent.q_net.eval()
+
 
 running = True
 while running:
@@ -39,9 +43,13 @@ while running:
         state["runner_vel"][1],
         state["chaser_vel"][0],
         state["chaser_vel"][1],
+        state["distances"][0],
+        state["distances"][1],
+        state["distances"][2],
+        state["distances"][3],
     ], dtype=np.float32)
 
-    action = agent.select_action(s, epsilon=0)  # no randomness, full control
+    action = agent.select_action(s, epsilon=0)
     env.action(action)
 
     env.render()
