@@ -9,11 +9,10 @@ class Environment:
         self.screen_width, self.screen_height = 1240, 800
         self.border_width = 10
         self.score = 0
-        self.friction = 0.7
+        self.friction = 0.9
 
-        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
-        self.font = pygame.font.SysFont("Arial", 18)
-        pygame.display.set_caption("Environment")
+        self.screen = None
+        self.font = None
 
         # chaser
         self.chaser_size = 10
@@ -57,7 +56,10 @@ class Environment:
                               (self.chaser_pos[1] - self.runner_pos[1])**2)**0.5
 
         angle = random.uniform(0, 2 * math.pi)
-        self.runner_vel = [self.runner_speed * math.cos(angle), self.runner_speed * math.sin(angle)]
+        self.runner_vel = [
+            self.runner_speed * math.cos(angle),
+            self.runner_speed * math.sin(angle)
+        ]
 
         # init score
         self.score = 0
@@ -106,8 +108,7 @@ class Environment:
         elif keys[pygame.K_RIGHT]:
             action = 3
 
-        if action is not None:
-            self.action(action)
+        self.action(action)
 
     def action(self, action):
         ax, ay = 0.0, 0.0
@@ -128,8 +129,11 @@ class Environment:
         if ay == 0:
             self.chaser_vel[1] *= self.friction
 
-        self.chaser_vel[0] = max(-self.max_chaser_speed, min(self.chaser_vel[0], self.max_chaser_speed))
-        self.chaser_vel[1] = max(-self.max_chaser_speed, min(self.chaser_vel[1], self.max_chaser_speed))
+        speed = (self.chaser_vel[0]**2 + self.chaser_vel[1]**2)**0.5
+        if speed > self.max_chaser_speed:
+            factor = self.max_chaser_speed / speed
+            self.chaser_vel[0] *= factor
+            self.chaser_vel[1] *= factor
 
     def update(self):
         reward = 0
@@ -143,27 +147,24 @@ class Environment:
         if self.runner_pos[0] <= self.border_width or self.runner_pos[0] >= self.screen_width - self.border_width:
             self.runner_vel[0] *= -1
             self.runner_pos[0] = max(self.border_width, min(self.runner_pos[0], self.screen_width - self.border_width))
-            reward = -5
-            wall_hit = True
 
         if self.runner_pos[1] <= self.border_width or self.runner_pos[1] >= self.screen_height - self.border_width:
             self.runner_vel[1] *= -1
             self.runner_pos[1] = max(self.border_width, min(self.runner_pos[1], self.screen_height - self.border_width))
-            reward = -5
-            wall_hit = True
 
         if (self.chaser_pos[0] <= self.border_width or self.chaser_pos[0] >= self.screen_width - self.border_width
                 or self.chaser_pos[1] <= self.border_width or self.chaser_pos[1] >= self.screen_height - self.border_width):
             self.chaser_pos = [self.screen_width / 2, self.screen_height / 2]
             self.chaser_vel = [0.0, 0.0]
+            self.score -= 1
+            reward = -100
+            wall_hit = True
 
         self.runner_step_counter += 1
         if self.runner_step_counter >= self.runner_step_threshold:
-            runner_speed_magnitude = (self.runner_vel[0]**2 + self.runner_vel[1]**2)**0.5
-            if runner_speed_magnitude != 0:
-                angle = random.uniform(0, 2 * math.pi)
-                self.runner_vel[0] = runner_speed_magnitude * math.cos(angle)
-                self.runner_vel[1] = runner_speed_magnitude * math.sin(angle)
+            angle = random.uniform(0, 2 * math.pi)
+            self.runner_vel[0] = self.runner_speed * math.cos(angle)
+            self.runner_vel[1] = self.runner_speed * math.sin(angle)
             self.runner_step_counter = 0
 
         dx = self.chaser_pos[0] - self.runner_pos[0]
@@ -175,7 +176,7 @@ class Environment:
                 reward += 1
 
         if distance <= self.chaser_size + self.runner_size:
-            reward = 10
+            reward = 100
             self.score += 1
 
             self.runner_pos = [
@@ -183,17 +184,14 @@ class Environment:
                 random.randint(self.border_width, self.screen_height - self.border_width)
             ]
 
-            speed_magnitude = (self.runner_vel[0]**2 + self.runner_vel[1]**2)**0.5
-            if speed_magnitude != 0:
-                scale = (speed_magnitude + self.runner_level_acceleration) / speed_magnitude
-                self.runner_vel[0] *= scale
-                self.runner_vel[1] *= scale
+            self.runner_speed = min(
+                self.runner_speed + self.runner_level_acceleration,
+                self.max_runner_speed
+            )
 
-                final_speed = (self.runner_vel[0]**2 + self.runner_vel[1]**2)**0.5
-                if final_speed > self.max_runner_speed:
-                    factor = self.max_runner_speed / final_speed
-                    self.runner_vel[0] *= factor
-                    self.runner_vel[1] *= factor
+            angle = random.uniform(0, 2 * math.pi)
+            self.runner_vel[0] = self.runner_speed * math.cos(angle)
+            self.runner_vel[1] = self.runner_speed * math.sin(angle)
 
             self.runner_step_counter = 0
 
@@ -202,7 +200,14 @@ class Environment:
         state = {
             "runner_pos": self.runner_pos[:],
             "chaser_pos": self.chaser_pos[:],
-            "chaser_speed": (self.chaser_vel[0]**2 + self.chaser_vel[1]**2)**0.5
+            "runner_vel": self.runner_vel[:],
+            "chaser_vel": self.chaser_vel[:],
+            "distances": [
+                self.runner_pos[0] - self.border_width,
+                (self.screen_width - self.border_width) - self.runner_pos[0],
+                self.runner_pos[1] - self.border_width,
+                (self.screen_height - self.border_width) - self.runner_pos[1],
+            ]
         }
 
         return state, reward
