@@ -17,11 +17,10 @@ clock = pygame.time.Clock()
 agent = Agent(
     input_dim=12,
     output_dim=4,
-    hidden_dim=64,
+    hidden_dim=128,
     buffer_size=10000,
-    batch_size=32,
-    gamma=0.99,
-    lr=1e-3,
+    batch_size=64,
+    update_every=100
 )
 
 max_steps_per_episode = 1000
@@ -29,7 +28,7 @@ max_steps_per_episode = 1000
 epsilon = 1.0
 epsilon_decay = 0.98
 epsilon_end = 0.05
-num_episodes = 1000
+num_episodes = 500
 
 max_reward = 0
 episode_rewards = []
@@ -61,10 +60,8 @@ for episode in range(num_episodes):
             state["distances"][3],
         ], dtype=np.float32)
 
-        action = agent.select_action(s, epsilon)
-
-        env.handle_input()
-        # env.action(action)
+        action = agent.select_action(s, 0)
+        env.action(action)
 
         next_state, reward = env.update()
         env.render()
@@ -85,15 +82,13 @@ for episode in range(num_episodes):
             next_state["distances"][3],
         ], dtype=np.float32)
 
-        done = (step >= max_steps_per_episode)
+        done = (reward == -100) or (step >= max_steps_per_episode)
 
         agent.store_transition(s, action, reward, ns, done)
         agent.train_step()
 
         state = next_state
         step += 1
-
-        clock.tick(30)
 
     episode_rewards.append(total_reward)
     print(f"Episode {episode + 1}/{num_episodes} - Total Reward: {total_reward} - Epsilon: {epsilon:.3f} - Score: {env.score}")
