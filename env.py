@@ -35,6 +35,10 @@ class Environment:
 
         self.prev_distance = 0
 
+        self.reward_wall = -200
+        self.reward_chase = 1
+        self.reward_capture = 100
+
         self.reset()
 
     def reset(self):
@@ -157,7 +161,7 @@ class Environment:
             self.chaser_pos = [self.screen_width / 2, self.screen_height / 2]
             self.chaser_vel = [0.0, 0.0]
             self.score -= 1
-            reward = -2
+            reward = self.reward_wall
             wall_hit = True
 
         self.runner_step_counter += 1
@@ -173,10 +177,10 @@ class Environment:
 
         if not wall_hit:
             if distance < self.prev_distance:
-                reward += 0.05
+                reward += self.reward_chase
 
         if distance <= self.chaser_size + self.runner_size:
-            reward = 1
+            reward = self.reward_capture
             self.score += 1
 
             self.runner_pos = [
@@ -198,16 +202,29 @@ class Environment:
         self.prev_distance = distance
 
         state = {
-            "runner_pos": self.runner_pos[:],
-            "chaser_pos": self.chaser_pos[:],
-            "runner_vel": self.runner_vel[:],
-            "chaser_vel": self.chaser_vel[:],
+            "runner_pos": [
+                self.runner_pos[0] / self.screen_width,
+                self.runner_pos[1] / self.screen_height
+            ],
+            "chaser_pos": [
+                self.chaser_pos[0] / self.screen_width,
+                self.chaser_pos[1] / self.screen_height
+            ],
+            "runner_vel": [
+                self.runner_vel[0] / self.max_runner_speed,
+                self.runner_vel[1] / self.max_runner_speed
+            ],
+            "chaser_vel": [
+                self.chaser_vel[0] / self.max_chaser_speed,
+                self.chaser_vel[1] / self.max_chaser_speed
+            ],
             "distances": [
-                self.runner_pos[0] - self.border_width,
-                (self.screen_width - self.border_width) - self.runner_pos[0],
-                self.runner_pos[1] - self.border_width,
-                (self.screen_height - self.border_width) - self.runner_pos[1],
-            ]
+                (self.runner_pos[0] - self.border_width) / (self.screen_width - 2 * self.border_width),
+                (self.screen_width - self.border_width - self.runner_pos[0]) / (self.screen_width - 2 * self.border_width),
+                (self.runner_pos[1] - self.border_width) / (self.screen_height - 2 * self.border_width),
+                (self.screen_height - self.border_width - self.runner_pos[1]) / (self.screen_height - 2 * self.border_width)
+            ],
+            "friction": self.friction
         }
 
         return state, reward

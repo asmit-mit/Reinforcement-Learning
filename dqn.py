@@ -46,7 +46,7 @@ class QNetwork(nn.Module):
 class Agent:
     def __init__(
         self,
-        input_dim=6,
+        input_dim=12,
         output_dim=4,
         hidden_dim=64,
         buffer_size=10000,

@@ -16,12 +16,12 @@ env.friction = 1
 clock = pygame.time.Clock()
 
 agent = Agent(
-    input_dim=12,
+    input_dim=13,
     output_dim=4,
     hidden_dim=128,
 )
 
-agent.q_net.load_state_dict(torch.load("weights/best_q_network.pth", map_location=agent.device))
+agent.q_net.load_state_dict(torch.load("weights/best_q_network_ep68.pth", map_location=agent.device))
 agent.q_net.eval()
 
 
@@ -35,18 +35,13 @@ while running:
     print(state)
 
     s = np.array([
-        state["runner_pos"][0],
-        state["runner_pos"][1],
-        state["chaser_pos"][0],
-        state["chaser_pos"][1],
-        state["runner_vel"][0],
-        state["runner_vel"][1],
-        state["chaser_vel"][0],
-        state["chaser_vel"][1],
-        state["distances"][0],
-        state["distances"][1],
-        state["distances"][2],
-        state["distances"][3],
+        state["runner_pos"][0], state["runner_pos"][1],
+        state["chaser_pos"][0], state["chaser_pos"][1],
+        state["runner_vel"][0], state["runner_vel"][1],
+        state["chaser_vel"][0], state["chaser_vel"][1],
+        state["distances"][0], state["distances"][1],
+        state["distances"][2], state["distances"][3],
+        state["friction"]
     ], dtype=np.float32)
 
     action = agent.select_action(s, epsilon=0)
