@@ -11,7 +11,7 @@ env.screen = pygame.display.set_mode((env.screen_width, env.screen_height))
 env.font = pygame.font.SysFont("Arial", 18)
 env.max_runner_speed = 5
 env.max_chaser_speed = 10
-env.friction = 1
+env.friction = 0.5
 
 clock = pygame.time.Clock()
 
@@ -21,7 +21,7 @@ agent = Agent(
     hidden_dim=128,
 )
 
-agent.q_net.load_state_dict(torch.load("weights/best_q_network_ep68.pth", map_location=agent.device))
+agent.q_net.load_state_dict(torch.load("weights/attempt-3/best_q_network_ep1802.pth", map_location=agent.device))
 agent.q_net.eval()
 
 
@@ -31,8 +31,8 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    state, _ = env.update()
-    print(state)
+    state, reward = env.update()
+    print(reward)
 
     s = np.array([
         state["runner_pos"][0], state["runner_pos"][1],

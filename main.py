@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import pygame
-import random
 from env import Environment
 from dqn import Agent
 
@@ -31,32 +30,37 @@ agent = Agent(
     input_dim=13,
     output_dim=4,
     hidden_dim=128,
-    buffer_size=10000,
+    buffer_size=2000,
     batch_size=128,
     gamma=0.99,
     lr=1e-3,
-    update_every=100
+    update_every=50
 )
 
 # hyperparameters
-max_steps_per_episode = 1000
-num_episodes = 20000
+max_steps_per_episode = 1000  # 1000
+num_episodes = 50000  # 20000
 
 epsilon_start = 1.0
 epsilon_end = 0.05
-epsilon_decay_episodes = 5000
+epsilon_decay_episodes = 2000  # 2000
 
 train_every = 4
-warmup_steps = 2000
-save_interval = 1000
+warmup_steps = 1000
+save_interval = 100
 render = False
+
+threshold_score = 2
+score_check_interval = 5
+score_window = 0
 
 if render:
     env.screen = pygame.display.set_mode((env.screen_width, env.screen_height))
     env.font = pygame.font.SysFont("Arial", 18)
 
-# env.max_chaser_speed = 10
-# env.max_runner_speed = 5
+env.max_chaser_speed = 10
+env.max_runner_speed = 5
+env.friction = 1
 
 episode_rewards = []
 max_reward = -float("inf")
@@ -70,8 +74,6 @@ for episode in range(num_episodes):
     total_reward = 0
     step = 0
     done = False
-
-    env.friction = random.uniform(0.1, 0.9)
 
     while not done and step < max_steps_per_episode:
         s = np.array([
@@ -117,15 +119,23 @@ for episode in range(num_episodes):
 
     episode_rewards.append(total_reward)
 
+    score_window += env.score
+
     if total_reward > max_reward:
         max_reward = total_reward
         torch.save(agent.q_net.state_dict(), f"{attempt_dir}/best_q_network_ep{episode + 1}.pth")
-        env.friction = min(0.1, env.friction - 0.01)
         print(f"New High Score! Saved model at episode {episode + 1}")
 
     if (episode + 1) % save_interval == 0:
         torch.save(agent.q_net.state_dict(), f"{attempt_dir}/q_network_ep{episode + 1}.pth")
         print(f"Model saved at episode {episode + 1}")
+
+    if (episode + 1) % score_check_interval == 0 and (score_window / score_check_interval) >= threshold_score:
+        score_window = 0
+        env.friction = max(0.2, env.friction - 0.05)
+        env.max_chaser_speed = min(25, env.max_chaser_speed + 2)
+        env.max_runner_speed = min(15, env.max_runner_speed + 2)
+        print("Score threshold corssed, increasing difficulty")
 
     epsilon = max(epsilon_end, epsilon_start - (episode / epsilon_decay_episodes) * (epsilon_start - epsilon_end))
 
@@ -133,7 +143,7 @@ for episode in range(num_episodes):
 
 pygame.quit()
 
-window = 100
+window = 500
 moving_avg = np.convolve(episode_rewards, np.ones(window) / window, mode='valid')
 
 plt.figure(figsize=(10, 5))

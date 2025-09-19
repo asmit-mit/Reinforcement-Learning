@@ -177,7 +177,9 @@ class Environment:
 
         if not wall_hit:
             if distance < self.prev_distance:
-                reward += self.reward_chase
+                reward = self.reward_chase
+            else:
+                reward = -2 * self.reward_chase
 
         if distance <= self.chaser_size + self.runner_size:
             reward = self.reward_capture
