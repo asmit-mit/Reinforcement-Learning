@@ -11,9 +11,9 @@ env.font = pygame.font.SysFont("Arial", 18)
 
 clock = pygame.time.Clock()
 
-env.max_runner_speed = 5
-env.max_chaser_speed = 10
-env.friction = 0
+# env.max_runner_speed = 5
+# env.max_chaser_speed = 10
+env.friction = 1
 
 running = True
 while running:

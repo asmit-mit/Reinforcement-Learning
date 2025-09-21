@@ -213,12 +213,12 @@ class Environment:
                 self.chaser_pos[1] / self.screen_height
             ],
             "runner_vel": [
-                self.runner_vel[0] / self.max_runner_speed,
-                self.runner_vel[1] / self.max_runner_speed
+                self.runner_vel[0] / 20,
+                self.runner_vel[1] / 20,
             ],
             "chaser_vel": [
-                self.chaser_vel[0] / self.max_chaser_speed,
-                self.chaser_vel[1] / self.max_chaser_speed
+                self.chaser_vel[0] / 30,
+                self.chaser_vel[1] / 30,
             ],
             "distances": [
                 (self.runner_pos[0] - self.border_width) / (self.screen_width - 2 * self.border_width),
@@ -226,7 +226,9 @@ class Environment:
                 (self.runner_pos[1] - self.border_width) / (self.screen_height - 2 * self.border_width),
                 (self.screen_height - self.border_width - self.runner_pos[1]) / (self.screen_height - 2 * self.border_width)
             ],
-            "friction": self.friction
+            "friction": self.friction,
+            "max_runner_speed": self.max_runner_speed / 20,
+            "max_chaser_speed": self.max_chaser_speed / 30,
         }
 
         return state, reward
