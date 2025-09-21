@@ -139,6 +139,23 @@ class Environment:
             self.chaser_vel[0] *= factor
             self.chaser_vel[1] *= factor
 
+    def action_continuous(self, accel):
+        ax, ay = accel[0], accel[1]
+
+        self.chaser_vel[0] += ax
+        self.chaser_vel[1] += ay
+
+        if ax == 0:
+            self.chaser_vel[0] *= (1 - self.friction)
+        if ay == 0:
+            self.chaser_vel[1] *= (1 - self.friction)
+
+        speed = (self.chaser_vel[0]**2 + self.chaser_vel[1]**2)**0.5
+        if speed > self.max_chaser_speed:
+            factor = self.max_chaser_speed / speed
+            self.chaser_vel[0] *= factor
+            self.chaser_vel[1] *= factor
+
     def update(self):
         reward = 0
         wall_hit = False

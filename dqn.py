@@ -65,7 +65,7 @@ class Agent:
         self.target_net.eval()
 
         self.optimizer = torch.optim.Adam(self.q_net.parameters(), lr=lr)
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.HuberLoss()
 
         self.replay_buffer = ReplayBuffer(buffer_size)
         self.batch_size = batch_size
